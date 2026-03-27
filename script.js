@@ -3,7 +3,7 @@ const readAPIKey = "DBG9AO40GUBQOLFN";
 
 const ctx = document.getElementById('aqiChart').getContext('2d');
 
-// AQI Tick Labels
+// AQI Labels
 const aqiLabels = {
   0: 'Excellent',
   50: 'Good',
@@ -14,16 +14,18 @@ const aqiLabels = {
   500: 'Extreme'
 };
 
+// Create Chart
 const aqiChart = new Chart(ctx, {
   type: 'line',
   data: {
     labels: [],
     datasets: [{
+      label: "AQI",
       data: [],
       borderColor: 'blue',
       borderWidth: 3,
       pointRadius: 0,
-      tension: 0
+      tension: 0.2
     }]
   },
   options: {
@@ -52,32 +54,42 @@ const aqiChart = new Chart(ctx, {
           text: 'AQI'
         },
         ticks: {
-          stepSize: 50,
           callback: function(value) {
-            return aqiLabels[value] || value;
+            return aqiLabels[value] ?? '';
           }
         },
         grid: {
           color: '#ddd'
+        },
+        afterBuildTicks: (scale) => {
+          scale.ticks = [
+            { value: 0 },
+            { value: 50 },
+            { value: 100 },
+            { value: 150 },
+            { value: 200 },
+            { value: 300 },
+            { value: 500 }
+          ];
         }
       }
     }
   }
 });
 
-// Convert to Philippine time
+// Convert to Philippine Time
 function toPHTime(dateStr) {
   const date = new Date(dateStr);
-    return date.toLocaleString("en-PH", {
-        timeZone: "Asia/Manila",
-        month: 'numeric',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-});
+  return date.toLocaleString("en-PH", {
+    timeZone: "Asia/Manila",
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 }
 
-// Fetch ThingSpeak data
+// Fetch data from ThingSpeak
 async function fetchData() {
   try {
     const url = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}&results=100`;
@@ -93,13 +105,13 @@ async function fetchData() {
 
     aqiChart.update();
 
-  } catch (err) {
-    console.error("Fetch error:", err);
+  } catch (error) {
+    console.error("Fetch error:", error);
   }
 }
 
 // Initial load
 fetchData();
 
-// Auto update every 15 seconds
+// Auto-refresh every 15 seconds
 setInterval(fetchData, 15000);
